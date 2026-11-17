@@ -59,6 +59,47 @@ body {
     font-weight: bold;
 }
 
+#result {
+    display: none;
+    max-width: 620px;
+    margin: 25px auto;
+    padding: 18px 24px;
+    text-align: left;
+    font-size: 20px;
+    background: #f7f7f7;
+    border: 1px solid #bbb;
+    border-radius: 10px;
+}
+
+#result h3 {
+    margin-top: 0;
+    text-align: center;
+}
+
+#result p {
+    margin: 8px 0;
+}
+
+#result .judgment {
+    margin-top: 20px;
+    padding: 12px;
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+#result .pass {
+    color: #a40000;
+    background: #fdeaea;
+    border: 2px solid #d64040;
+}
+
+#result .fail {
+    color: #004a99;
+    background: #e9f3ff;
+    border: 2px solid #4b90d9;
+}
 </style>
 </head>
 
@@ -75,6 +116,7 @@ body {
 <div id="box" class="waiting">✖</div>
 <div id="countdown"></div>
 <div id="preparationMessage"></div>
+<div id="result"></div>
 
 <script>
 'use strict';
@@ -105,6 +147,7 @@ const enterStartDiv = document.getElementById("enterStart");
 const taskInstruction = document.getElementById("taskInstruction");
 const countdownDiv = document.getElementById("countdown");
 const preparationMessage = document.getElementById("preparationMessage");
+const resultDiv = document.getElementById("result");
 
 //====================
 // 音声
@@ -191,6 +234,8 @@ function beginPreparation() {
     preparationStarted = true;
     isPreparing = true;
     results = [];
+    resultDiv.style.display = "none";
+    resultDiv.innerHTML = "";
 
     unlockAudio();
 
@@ -348,6 +393,51 @@ function handleResponse() {
 }
 
 //====================
+// 結果表示
+//====================
+function showResult() {
+    let anticipation = 0;
+    let early = 0;
+    let valid = 0;
+    let lapse = 0;
+    let noResponse = 0;
+
+    results.forEach((rt) => {
+        // 排他的に分類する。
+        if (rt < 0) {
+            anticipation++;
+        } else if (rt <= 100) {
+            early++;
+        } else if (rt < 500) {
+            valid++;
+        } else if (rt < 10000) {
+            lapse++;
+        } else {
+            noResponse++;
+        }
+    });
+
+    const passed =
+        (valid + lapse >= 3) &&
+        (anticipation + early <= 2) &&
+        (noResponse <= 1);
+
+    resultDiv.innerHTML = `
+        <h3>結果</h3>
+        <p>先行反応：${anticipation} 回</p>
+        <p>早期反応：${early} 回</p>
+        <p>有効反応：${valid} 回</p>
+        <p>ラプス反応：${lapse} 回</p>
+        <p>無反応：${noResponse} 回</p>
+        <div class="judgment ${passed ? "pass" : "fail"}">
+            ${passed ? "合格" : "不合格"}
+        </div>
+    `;
+
+    resultDiv.style.display = "block";
+}
+
+//====================
 // テスト終了
 //====================
 function endTest() {
@@ -375,6 +465,7 @@ function endTest() {
         }
     }
 
+    showResult();
 }
 </script>
 
